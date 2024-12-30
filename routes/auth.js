@@ -1,6 +1,6 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
 import dotenv from 'dotenv';
 import { fetchUserById, updateUser, deleteUser } from '../controllers/userControllers.js';
