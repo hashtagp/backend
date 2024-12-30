@@ -48,6 +48,10 @@ app.use('/api/order', verifyOrderRoutes); // Use verify order routes
 app.use('/api/order', myOrdersRoutes); // Use my orders routes
 app.use('/api/order', placeOrderRoutes); // Use place order routes
 
+app.get('/',(req,res)=>{
+  res.send("API working!!!")
+})
+
 // Start the Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
