@@ -23,7 +23,7 @@ app.use(cookieParser()); // To handle cookies
 // CORS configuration
 //testing for cors origin: ['http://localhost:5173','http://localhost:5174']
 const corsOptions = {
-  origin: "http://13.60.168.229:80", // Update with your frontend URL
+  origin: "http://13.60.168.229", // Update with your frontend URL
   credentials: true, // Allow credentials (cookies, authorization headers, etc.)
   optionsSuccessStatus: 200 // Some legacy browsers choke on 204
 };
