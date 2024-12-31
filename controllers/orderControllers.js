@@ -2,6 +2,9 @@ import Order from '../models/Order.js';
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 import Razorpay from 'razorpay';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 // Middleware to verify JWT
 export const verifyToken = (req, res, next) => {
