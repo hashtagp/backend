@@ -108,9 +108,6 @@ export const placeOrder = async (req, res) => {
     const userId = req.user.id;
     console.log("items in backend are: ", items);
 
-    console.log("r key", process.env.RAZORPAY_KEY_ID);
-    console.log("r secret", process.env.RAZORPAY_KEY_SECRET);
-
     const newOrder = new Order({
       userId,
       items,
