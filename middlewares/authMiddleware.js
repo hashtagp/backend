@@ -6,9 +6,6 @@ dotenv.config();
 export const verifyToken = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
   console.log("Token received:", token);
-  if(req.originalUrl === '/api/orders/track'){
-    console.log("reached track order");
-  }
 
   if (!token) {
     console.log("No token provided.");
@@ -17,6 +14,11 @@ export const verifyToken = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const isAdmin = req.headers.admin;
+    if (isAdmin && !decoded.isAdmin) {
+      console.log("Unauthorized access.");
+      return res.status(401).json({ error: 'Unauthorized access.' });
+    }
     req.user = decoded;
     console.log("Decoded user:", decoded);
     next();

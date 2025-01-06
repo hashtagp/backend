@@ -10,12 +10,12 @@ const authRoutes = express.Router();
 dotenv.config();
 
 // Generate Tokens
-const generateAccessToken = (userId) => {
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
+export const generateAccessToken = (userId, isAdmin=false) => {
+  return jwt.sign({ id: userId, isAdmin }, process.env.JWT_SECRET, { expiresIn: '7d' });
 };
 
-const generateRefreshToken = (userId) => {
-  return jwt.sign({ id: userId }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '720h' });
+export const generateRefreshToken = (userId, isAdmin=false) => {
+  return jwt.sign({ id: userId, isAdmin }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '720h' });
 };
 
 // In-memory storage for refresh tokens (use a database in production)

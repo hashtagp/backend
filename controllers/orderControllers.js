@@ -18,6 +18,11 @@ export const verifyToken = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const isAdmin = req.headers.admin;
+    if (isAdmin && !decoded.isAdmin) {
+      console.log("Unauthorized access.");
+      return res.status(401).json({ error: 'Unauthorized access.' });
+    }
     req.user = decoded;
     console.log("Decoded user:", decoded);
     next();
@@ -90,14 +95,14 @@ export const updateOrderStatus = async (req, res) => {
   try {
     const order = await Order.findById(orderId);
     if (!order || order.userId !== req.userId) {
-      return res.status(404).json({ error: 'Order not found' });
+      return res.status(404).json({ success:false, error: 'Order not found' });
     }
 
     order.status = status;
     await order.save();
-    res.status(200).json(order);
+    res.status(200).json({ success:true, order });
   } catch (error) {
-    res.status(400).json({ error });
+    res.status(400).json({ success:false, error });
   }
 };
 
