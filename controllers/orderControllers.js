@@ -34,8 +34,8 @@ export const verifyToken = (req, res, next) => {
 
 // Fetch All Orders
 export const fetchAllOrders = async (req, res) => {
-  const orders = await Order.find({ userId: req.userId });
-  res.status(200).json(orders);
+  const orders = await Order.find({});
+  res.status(200).json({ success:true,orders });
 };
 
 // Fetch Order by ID
