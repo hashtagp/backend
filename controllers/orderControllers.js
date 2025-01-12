@@ -89,16 +89,17 @@ export const createOrder = async (req, res) => {
 
 // Update Order Status
 export const updateOrderStatus = async (req, res) => {
-  const { orderId } = req.params;
-  const { status } = req.body;
+  const { orderId, status, date } = req.body;
 
   try {
     const order = await Order.findById(orderId);
-    if (!order || order.userId !== req.userId) {
+    console.log("updating order: ",order);
+    console.log("Request by: ",req.user);
+    if (!order) {
       return res.status(404).json({ success:false, error: 'Order not found' });
     }
-
-    order.status = status;
+    console.log("order updating");
+    order[`${status}Date`] = date;
     await order.save();
     res.status(200).json({ success:true, order });
   } catch (error) {

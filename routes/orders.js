@@ -16,6 +16,6 @@ orderRoutes.post('/cart', verifyToken, addItemToCart);
 orderRoutes.post('/', verifyToken, createOrder);
 
 // Update Order Status
-orderRoutes.put('/:orderId/status', verifyToken, updateOrderStatus);
+orderRoutes.put('/update', verifyToken, updateOrderStatus);
 
-export default orderRoutes;
+export default orderRoutes; 
