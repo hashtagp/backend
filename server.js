@@ -33,7 +33,7 @@ app.use(cookieParser()); // To handle cookies
 const corsOptions = {
   origin: ["http://13.60.168.229","http://localhost:5173"], // Update with your frontend URL
   credentials: true, // Allow credentials (cookies, authorization headers, etc.)
-  optionsSuccessStatus: 200 // Some legacy browsers choke on 204
+  optionsSuccessStatus: 200 // Some legacy browsers choke on 204ssh
 };
 app.use(cors(corsOptions));
 

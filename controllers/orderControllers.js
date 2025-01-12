@@ -3,6 +3,7 @@ import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 import Razorpay from 'razorpay';
 import dotenv from 'dotenv';
+import dayjs from 'dayjs';
 
 dotenv.config();
 
@@ -34,8 +35,47 @@ export const verifyToken = (req, res, next) => {
 
 // Fetch All Orders
 export const fetchAllOrders = async (req, res) => {
-  const orders = await Order.find({});
-  res.status(200).json({ success:true,orders });
+  try {
+    const { date, filter } = req.query;
+
+    // Validate date and filter
+    if (!date || !filter) {
+      return res.status(400).json({ success:false, message: "Date and filter are required." });
+    }
+
+    let startDate, endDate;
+
+    // Determine the date range based on the filter
+    switch (filter) {
+      case "yearly":
+        startDate = dayjs(date).startOf("year").toDate();
+        endDate = dayjs(date).endOf("year").toDate();
+        break;
+      case "monthly":
+        startDate = dayjs(date).startOf("month").toDate();
+        endDate = dayjs(date).endOf("month").toDate();
+        break;
+      case "weekly":
+        startDate = dayjs(date).startOf("week").toDate();
+        endDate = dayjs(date).endOf("week").toDate();
+        break;
+      case "daily":
+      default:
+        startDate = dayjs(date).startOf("day").toDate();
+        endDate = dayjs(date).endOf("day").toDate();
+        break;
+    }
+
+    // Fetch orders within the date range
+    const orders = await Order.find({
+      orderDate: { $gte: startDate, $lte: endDate },
+    });
+
+    res.status(200).json({ success:true, orders });
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    res.status(500).json({ success:false, message: "Internal server error." });
+  }
 };
 
 // Fetch Order by ID
