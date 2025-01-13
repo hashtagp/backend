@@ -1,4 +1,5 @@
 import User from '../models/User.js';
+import Banner from '../models/Banner.js';
 
 // Fetch User by ID
 export const fetchUserById = async (req, res) => {
@@ -44,5 +45,16 @@ export const deleteUser = async (req, res) => {
     res.status(200).json({ message: 'User deleted successfully' });
   } catch (error) {
     res.status(400).json({ error });
+  }
+};
+
+//get banner
+export const getBanner = async (req, res) => {
+  try {
+    const banner = await Banner.findOne();
+    res.status(200).json({ success: true, data: banner });
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({ success: false, error });
   }
 };

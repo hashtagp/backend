@@ -1,6 +1,9 @@
 import Admin from '../models/Admin.js';
+import Banner from '../models/Banner.js';
 import bcrypt from 'bcryptjs';
 import { generateAccessToken, generateRefreshToken } from '../routes/auth.js';
+import fs from "fs" // importing file system
+import { v2 as cloudinary } from 'cloudinary';
 
 let refreshTokens = [];
 
@@ -55,4 +58,48 @@ export const adminRegister = async (req, res) => {
       res.status(400).json({ success:false, error });
     }
 };
+
+
+// Add Banner
+export const addBanner = async (req, res) => {
+    const { name, image } = req.body;
+    try {
+
+      const existingBanner = await Banner.findOne();
+
+      if (existingBanner) {
+        // Step 2: Delete the old image from Cloudinary
+        const oldImagePublicId = existingBanner.image.split('/').pop().split('.').slice(0, -1).join('.'); // Extract the public ID from the URL
+        console.log(oldImagePublicId);
+
+        await cloudinary.uploader.destroy(oldImagePublicId, { resource_type: 'image' })
+        .then((result) => {
+          console.log("Cloudinary image deleted:", result);
+        })
+        .catch((error) => {
+          console.log('Error deleting image from Cloudinary:', error);
+        });
+      }
+
+      const uploadResult = await cloudinary.uploader
+      .upload(
+          req.file.path, {
+              public_id: `${req.file.filename}`,
+          }
+      )
+      .catch((error) => {
+          console.log(error);
+      }); 
+    const banner = { name, image: uploadResult.secure_url };
+    
+      await Banner.deleteMany();
+      await Banner.create(banner);
+      res.status(201).json({ success: true, message: 'Banner added successfully' });
+    } catch (error) {
+      console.log(error);
+      res.status(400).json({ success: false, error });
+    }
+};
+
+
 
