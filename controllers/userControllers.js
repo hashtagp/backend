@@ -51,7 +51,7 @@ export const deleteUser = async (req, res) => {
 //get banner
 export const getBanner = async (req, res) => {
   try {
-    const banner = await Banner.findOne();
+    const banner = await Banner.find();
     res.status(200).json({ success: true, data: banner });
   } catch (error) {
     console.log(error);

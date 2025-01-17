@@ -1,4 +1,4 @@
-import Admin from '../models/Admin.js';
+import User from "../models/User.js";
 import Banner from '../models/Banner.js';
 import bcrypt from 'bcryptjs';
 import { generateAccessToken, generateRefreshToken } from '../routes/auth.js';
@@ -13,8 +13,12 @@ export const adminLogin = async (req, res) => {
   const { username, password } = req.body;
   console.log(req.body);
 
-  const admin = await Admin.findOne({ username });
+  const admin = await User.findOne({ username });
     if (!admin) return res.status(404).json({ success: false, error: 'Admin not found' });
+
+    if(!admin.admin){
+      return res.status(403).json({success: false, error: "Access forbidden"});
+    }
 
     const isValid = await bcrypt.compare(password, admin.password);
     if (!isValid) return res.status(401).json({ success: false, error: 'Invalid credentials' });
@@ -65,22 +69,6 @@ export const addBanner = async (req, res) => {
     const { name, image } = req.body;
     try {
 
-      const existingBanner = await Banner.findOne();
-
-      if (existingBanner) {
-        // Step 2: Delete the old image from Cloudinary
-        const oldImagePublicId = existingBanner.image.split('/').pop().split('.').slice(0, -1).join('.'); // Extract the public ID from the URL
-        console.log(oldImagePublicId);
-
-        await cloudinary.uploader.destroy(oldImagePublicId, { resource_type: 'image' })
-        .then((result) => {
-          console.log("Cloudinary image deleted:", result);
-        })
-        .catch((error) => {
-          console.log('Error deleting image from Cloudinary:', error);
-        });
-      }
-
       const uploadResult = await cloudinary.uploader
       .upload(
           req.file.path, {
@@ -92,7 +80,6 @@ export const addBanner = async (req, res) => {
       }); 
     const banner = { name, image: uploadResult.secure_url };
     
-      await Banner.deleteMany();
       await Banner.create(banner);
       res.status(201).json({ success: true, message: 'Banner added successfully' });
     } catch (error) {
