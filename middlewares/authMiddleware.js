@@ -1,7 +1,5 @@
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import mongoose from 'mongoose';
-import User from '../models/userModel.js';
 
 dotenv.config();
 
