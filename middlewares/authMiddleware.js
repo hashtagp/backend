@@ -14,8 +14,7 @@ export const verifyToken = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const isAdmin = req.headers.admin;
-    if (isAdmin && !decoded.admin) {
+    if (!decoded.isAdmin) {
       console.log("Unauthorized access.");
       return res.status(401).json({ error: 'Unauthorized access.' });
     }
