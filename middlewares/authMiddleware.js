@@ -16,6 +16,8 @@ export const verifyToken = (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
     const isAdmin = req.originalUrl.includes('/admin') ? true : false;
+    console.log("Is admin route:", isAdmin);
+    console.log("Decoded token:", decoded);
     if (isAdmin) {
       if (!decoded.isAdmin) {
         console.log("Unauthorized access.");

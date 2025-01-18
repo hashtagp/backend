@@ -88,5 +88,22 @@ export const addBanner = async (req, res) => {
     }
 };
 
+// Delete Banner
+export const deleteBanner = async (req, res) => {
+    const { id } = req.params;
+    try {
+      const banner = await Banner.findById(id);
+      if (!banner) return res.status(404).json({ success: false, error: 'Banner not found' });
+
+      // await cloudinary.uploader.destroy(banner.image.split("/").pop().split(".")[0]);
+      await Banner.findByIdAndDelete(id);
+      res.status(200).json({ success: true, message: 'Banner deleted successfully' });
+    }
+    catch (error) {
+      console.log(error);
+      res.status(400).json({ success: false, error });
+    }
+}
+
 
 
