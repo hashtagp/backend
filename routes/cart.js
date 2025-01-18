@@ -83,6 +83,7 @@ cartRoutes.post('/get', verifyToken, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
+    console.log("Fetched cart data:", user.cart);
     const cartData = user.cart.map(item => ({
       itemId: item.itemId._id,
       name: item.itemId.name,
