@@ -26,5 +26,6 @@ adminRoutes.get('/products', verifyToken, fetchAllProducts);
 adminRoutes.post('/add', verifyToken, upload.single("image"), addProduct);
 adminRoutes.put('/update', verifyToken, updateProduct);
 adminRoutes.delete('/delete', verifyToken, deleteProduct);
+adminRoutes.get('/verify', verifyToken);
 
 export default adminRoutes;
