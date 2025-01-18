@@ -1,5 +1,7 @@
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import mongoose from 'mongoose';
+import User from '../models/userModel.js';
 
 dotenv.config();
 
@@ -14,10 +16,15 @@ export const verifyToken = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (!decoded.isAdmin) {
-      console.log("Unauthorized access.");
-      return res.status(401).json({ error: 'Unauthorized access.' });
+    
+    const isAdmin = req.originalUrl.includes('/admin') ? true : false;
+    if (isAdmin) {
+      if (!decoded.isAdmin) {
+        console.log("Unauthorized access.");
+        return res.status(401).json({ error: 'Unauthorized access.' });
+      }
     }
+    
     req.user = decoded;
     console.log("Decoded user:", decoded);
     next();
