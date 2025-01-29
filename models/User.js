@@ -10,6 +10,7 @@ const UserSchema = new mongoose.Schema({
       itemId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
       quantity: { type: Number, required: true, default: 1 },
       price: { type: Number, required: true }, // Include price
+      gst: { type: Number, required: true },
     }
   ],
 });

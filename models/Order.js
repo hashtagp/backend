@@ -23,6 +23,7 @@ const OrderSchema = new mongoose.Schema({
       image: String,
       price: Number,
       quantity: Number,
+      gst: Number,
     },
   ],
   totalAmount: { type: Number, required: true },

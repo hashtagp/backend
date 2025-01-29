@@ -14,23 +14,23 @@ cartRoutes.post('/add', verifyToken, async (req, res) => {
   try {
     const user = await User.findById(userId);
     const product = await Product.findById(itemId); // Fetch product details
-
+  
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
-
+  
     if (!product) {
       return res.status(404).json({ error: 'Product not found' });
     }
-
+  
     const itemIndex = user.cart.findIndex(item => item.itemId.toString() === itemId);
-
+  
     if (itemIndex > -1) {
       user.cart[itemIndex].quantity += quantity;
     } else {
-      user.cart.push({ itemId, quantity, price: product.price }); // Include price
+      user.cart.push({ itemId, quantity, price: product.price, gst: product.gst }); // Include price and gst
     }
-
+  
     await user.save();
     console.log("Cart after adding item:", user.cart);
     res.status(200).json(user.cart);
@@ -90,6 +90,7 @@ cartRoutes.post('/get', verifyToken, async (req, res) => {
       price: item.itemId.price,
       quantity: item.quantity,
       image: item.itemId.image, // Assuming the product has an image field
+      gst: item.itemId.gst,
     }));
 
     console.log("Fetched cart data:", cartData);
