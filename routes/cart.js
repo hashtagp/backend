@@ -4,6 +4,7 @@ import User from '../models/User.js';
 import Product from '../models/Product.js'; // Ensure this import is correct
 
 const cartRoutes = express.Router();
+const filename = "cart.js";
 
 // Add item to cart
 cartRoutes.post('/add', verifyToken, async (req, res) => {
@@ -35,6 +36,8 @@ cartRoutes.post('/add', verifyToken, async (req, res) => {
     console.log("Cart after adding item:", user.cart);
     res.status(200).json(user.cart);
   } catch (error) {
+    console.log(`\nError in ${filename}/add`);
+    console.log(error);
     console.error("Error adding item to cart:", error);
     res.status(500).json({ error: 'Failed to add item to cart' });
   }
@@ -66,6 +69,8 @@ cartRoutes.post('/remove', verifyToken, async (req, res) => {
     console.log("Cart after removing item:", user.cart);
     res.status(200).json(user.cart);
   } catch (error) {
+    console.log(`\nError in ${filename}/remove`);
+    console.log(error);
     console.error("Error removing item from cart:", error);
     res.status(500).json({ error: 'Failed to remove item from cart' });
   }
@@ -96,6 +101,8 @@ cartRoutes.post('/get', verifyToken, async (req, res) => {
     console.log("Fetched cart data:", cartData);
     res.status(200).json(cartData);
   } catch (error) {
+    console.log(`\nError in ${filename}/get`);
+    console.log(error);
     console.error("Error fetching cart data:", error);
     res.status(500).json({ error: 'Failed to fetch cart data' });
   }

@@ -1,8 +1,11 @@
 import User from '../models/User.js';
 import Banner from '../models/Banner.js';
 
+const filename = 'userControllers.js';
+
 // Fetch User by ID
 export const fetchUserById = async (req, res) => {
+  try{
   const userId = req.user.id;
   const user = await User.findById(userId);
 
@@ -10,6 +13,12 @@ export const fetchUserById = async (req, res) => {
     return res.status(404).json({ error: 'User not found' });
   }
   res.status(200).json({success: true, user});
+}
+catch (error) {
+  console.log(`\nError in ${filename}/fetchUserById`);
+  console.log(error);
+  res.status(400).json({ success: false, error });
+}
 };
 
 // Update User
@@ -29,6 +38,8 @@ export const updateUser = async (req, res) => {
     await user.save();
     res.status(200).json(user);
   } catch (error) {
+    console.log(`\nError in ${filename}/updateUser`);
+    console.log(error);
     res.status(400).json({ error });
   }
 };
@@ -44,6 +55,8 @@ export const deleteUser = async (req, res) => {
     }
     res.status(200).json({ message: 'User deleted successfully' });
   } catch (error) {
+    console.log(`\nError in ${filename}/deleteUser`);
+    console.log(error);
     res.status(400).json({ error });
   }
 };
@@ -54,6 +67,7 @@ export const getBanner = async (req, res) => {
     const banner = await Banner.find();
     res.status(200).json({ success: true, data: banner });
   } catch (error) {
+    console.log(`\nError in ${filename}/getBanner`);
     console.log(error);
     res.status(400).json({ success: false, error });
   }

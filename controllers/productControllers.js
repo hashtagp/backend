@@ -2,12 +2,16 @@ import Product from '../models/Product.js';
 import fs from "fs" // importing file system
 import { v2 as cloudinary } from 'cloudinary';
 
+const filename = "productControllers.js";
+
 // Fetch All Products
 export const fetchAllProducts = async (req, res) => {
   try {
     const products = await Product.find();
     res.status(200).json({success:true, products });
   } catch (error) {
+    console.log(`\nError in ${filename}/fetchAllProducts`);
+    console.log(error);
     res.status(500).json({ error: 'Failed to fetch products' });
   }
 };
@@ -22,6 +26,8 @@ export const fetchProductById = async (req, res) => {
     }
     res.status(200).json(product);
   } catch (error) {
+    console.log(`\nError in ${filename}/fetchProductById`);
+    console.log(error);
     res.status(500).json({ error: 'Failed to fetch product' });
   }
 };
@@ -34,6 +40,8 @@ export const searchProducts = async (req, res) => {
     const products = await Product.find({ name: { $regex: query, $options: 'i' } });
     res.status(200).json(products);
   } catch (error) {
+    console.log(`\nError in ${filename}/searchProducts`);
+    console.log(error);
     console.log("Error in searching ",error)
     res.status(500).json({ error: 'Failed to search products' });
   }
@@ -41,6 +49,7 @@ export const searchProducts = async (req, res) => {
 
 // Add Product
 export const addProduct = async (req, res) => {
+  try{
   const { name, price, description, image, category, discount } = req.body;
 
   // let image_filename = `${req.file.filename}`;
@@ -62,6 +71,12 @@ export const addProduct = async (req, res) => {
   } catch (error) {
     res.status(400).json({ success:false, error: 'Failed to add product' });
   }
+}
+catch (error) {
+  console.log(`\nError in ${filename}/addProduct`);
+  console.log(error);
+  res.status(500).json({ error: 'Failed to add product' });
+}
 };
 
 // Update Product by ID
@@ -82,6 +97,8 @@ export const updateProduct = async (req, res) => {
     await product.save();
     res.status(200).json({ success:true, product });
   } catch (error) {
+    console.log(`\nError in ${filename}/updateProduct`);
+    console.log(error);
     res.status(500).json({ success:false, error: 'Failed to update product' });
   }
 };
@@ -98,6 +115,8 @@ export const deleteProduct = async (req, res) => {
     res.status(200).json({ success:true, message: 'Product deleted successfully' });
   }
   catch (error) {
+    console.log(`\nError in ${filename}/deleteProduct`);
+    console.log(error);
     res.status(500).json({ success:false, error: 'Failed to delete product' });
   }
 };

@@ -8,6 +8,7 @@ import { fetchUserById, updateUser, deleteUser } from '../controllers/userContro
 const authRoutes = express.Router();
 
 dotenv.config();
+const filename = 'auth.js';
 
 // Generate Tokens
 export const generateAccessToken = (userId, isAdmin=false) => {
@@ -27,8 +28,9 @@ authRoutes.post('/register', async (req, res) => {
   console.log(req.body);
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  const newUser = new User({ username, email, password: hashedPassword });
   try {
+  const newUser = new User({ username, email, password: hashedPassword });
+  
     await newUser.save();
 
     const accessToken = generateAccessToken(newUser._id);
@@ -44,6 +46,7 @@ authRoutes.post('/register', async (req, res) => {
 
     res.status(201).json({ accessToken });
   } catch (error) {
+    console.log(`Error in ${filename} POST /register`);
     console.log(error);
     res.status(400).json({ error });
   }
@@ -51,6 +54,7 @@ authRoutes.post('/register', async (req, res) => {
 
 // Login User
 authRoutes.post('/login', async (req, res) => {
+  try{
   const { username, password } = req.body;
 
   const user = await User.findOne({ username });
@@ -71,10 +75,17 @@ authRoutes.post('/login', async (req, res) => {
   });
 
   res.status(200).json({ accessToken });
+}
+catch (error) {
+  console.log(`Error in ${filename} POST /login`);
+  console.log(error);
+  res.status(400).json({ error });
+}
 });
 
 // Refresh Access Token
 authRoutes.post('/token', (req, res) => {
+  try{
   const refreshToken = req.cookies.refreshToken;
 
   if (!refreshToken) return res.status(401).json({ error: 'No refresh token provided' });
@@ -86,15 +97,28 @@ authRoutes.post('/token', (req, res) => {
     const accessToken = generateAccessToken(user.id);
     res.status(200).json({ accessToken });
   });
+}
+catch (error) {
+  console.log(`Error in ${filename} POST /token`);
+  console.log(error);
+  res.status(400).json({ error });
+}
 });
 
 // Logout User
 authRoutes.post('/logout', (req, res) => {
+  try{
   const refreshToken = req.cookies.refreshToken;
 
   refreshTokens = refreshTokens.filter(token => token !== refreshToken);
   res.clearCookie('refreshToken');
   res.status(200).send('Logged out');
+  }
+  catch (error) {
+    console.log(`Error in ${filename} POST /logout`);
+    console.log(error);
+    res.status(400).json({ error });
+  }
 });
 
 // Fetch User by ID

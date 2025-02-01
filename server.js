@@ -44,7 +44,10 @@ mongoose.connect(process.env.MONGO_URI, {
   serverSelectionTimeoutMS: 30000,
   socketTimeoutMS: 45000,
 }).then(() => console.log('MongoDB Connected'))
-  .catch(err => console.log(err));
+  .catch(err => {
+    console.log("\nError connecting to Database");
+    console.log(err);
+  });
 
 // Use Routes
 app.use('/api/auth', authRoutes);

@@ -6,13 +6,13 @@ import fs from "fs" // importing file system
 import { v2 as cloudinary } from 'cloudinary';
 
 let refreshTokens = [];
-
+const filename = "adminControllers.js";
 
 // Admin Login
 export const adminLogin = async (req, res) => {
   const { username, password } = req.body;
   console.log(req.body);
-
+try{
   const admin = await User.findOne({ username });
     if (!admin) return res.status(404).json({ success: false, error: 'Admin not found' });
 
@@ -33,6 +33,12 @@ export const adminLogin = async (req, res) => {
     });
 
     res.status(200).json({ success: true, accessToken });
+  }
+  catch (error) {
+    console.log(`\nError in ${filename}/adminLogin`);
+    console.log(error);
+    res.status(400).json({ success: false, error });
+  }
 };
 
 // Admin Register
@@ -58,6 +64,7 @@ export const adminRegister = async (req, res) => {
   
       res.status(201).json({ success:true, accessToken });
     } catch (error) {
+      console.log(`\nError in ${filename}/adminRegister`);
       console.log(error);
       res.status(400).json({ success:false, error });
     }
@@ -83,6 +90,7 @@ export const addBanner = async (req, res) => {
       await Banner.create(banner);
       res.status(201).json({ success: true, message: 'Banner added successfully' });
     } catch (error) {
+      console.log(`\nError in ${filename}/addBanner`);
       console.log(error);
       res.status(400).json({ success: false, error });
     }
@@ -100,6 +108,7 @@ export const deleteBanner = async (req, res) => {
       res.status(200).json({ success: true, message: 'Banner deleted successfully' });
     }
     catch (error) {
+      console.log(`\nError in ${filename}/deleteBanner`);
       console.log(error);
       res.status(400).json({ success: false, error });
     }

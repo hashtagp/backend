@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 
 dotenv.config();
+const filename = 'authMiddleware.js';
 
 export const verifyToken = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
@@ -29,6 +30,8 @@ export const verifyToken = (req, res, next) => {
     console.log("Decoded user:", decoded);
     next();
   } catch (error) {
+    console.log(`\nError in ${filename}/verifyToken`);
+    console.log(error);
     console.error("Error verifying token:", error);
     res.status(400).json({ error: 'Invalid token.' });
   }

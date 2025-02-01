@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import dayjs from 'dayjs';
 
 dotenv.config();
+const filename = 'orderControllers.js';
 
 // Middleware to verify JWT
 export const verifyToken = (req, res, next) => {
@@ -28,6 +29,8 @@ export const verifyToken = (req, res, next) => {
     console.log("Decoded user:", decoded);
     next();
   } catch (error) {
+    console.log(`\nError in ${filename}/verifytoken`);
+    console.log(error);
     console.error("Error verifying token:", error);
     res.status(400).json({ error: 'Invalid token.' });
   }
@@ -73,6 +76,8 @@ export const fetchAllOrders = async (req, res) => {
 
     res.status(200).json({ success:true, orders });
   } catch (error) {
+    console.log(`\nError in ${filename}/fetchAllOrders`);
+    console.log(error);
     console.error("Error fetching orders:", error);
     res.status(500).json({ success:false, message: "Internal server error." });
   }
@@ -80,6 +85,7 @@ export const fetchAllOrders = async (req, res) => {
 
 // Fetch Order by ID
 export const fetchOrderById = async (req, res) => {
+  try{
   const { orderId } = req.query;
   const order = await Order.findById(orderId);
 
@@ -87,10 +93,16 @@ export const fetchOrderById = async (req, res) => {
     return res.status(404).json({ error: 'Order not found' });
   }
   res.status(200).json(order);
+} catch (error) {
+  console.log(`\nError in ${filename}/fetchOrderById`);
+  console.log(error);
+  res.status(500).json({ error: 'Internal Server Error' });
+}
 };
 
 // Add Item to Cart
 export const addItemToCart = async (req, res) => {
+  try{
   const { itemId, quantity } = req.body;
 
   const user = await User.findById(req.userId);
@@ -105,10 +117,17 @@ export const addItemToCart = async (req, res) => {
 
   await user.save();
   res.status(200).json(user.cart);
+}
+catch (error) {
+  console.log(`\nError in ${filename}/addItemToCart`);
+  console.log(error);
+  res.status(500).json({ error: 'Internal Server Error' });
+}
 };
 
 // Create Order
 export const createOrder = async (req, res) => {
+  try{
   const { items, totalAmount, payment } = req.body;
 
   const newOrder = new Order({
@@ -125,13 +144,20 @@ export const createOrder = async (req, res) => {
   } catch (error) {
     res.status(400).json({ error });
   }
+}
+catch (error) {
+  console.log(`\nError in ${filename}/createOrder`);
+  console.log(error);
+  res.status(500).json({ error: 'Internal Server Error' });
+}
 };
 
 // Update Order Status
 export const updateOrderStatus = async (req, res) => {
+  try {
   const { orderId, status, date } = req.body;
 
-  try {
+  
     const order = await Order.findById(orderId);
     console.log("updating order: ",order);
     console.log("Request by: ",req.user);
@@ -143,6 +169,8 @@ export const updateOrderStatus = async (req, res) => {
     await order.save();
     res.status(200).json({ success:true, order });
   } catch (error) {
+    console.log(`\nError in ${filename}/updateOrderStatus`);
+    console.log(error);
     res.status(400).json({ success:false, error });
   }
 };
@@ -190,6 +218,8 @@ export const placeOrder = async (req, res) => {
       key: process.env.RAZORPAY_KEY_ID,
     });
   } catch (error) {
+    console.log(`\nError in ${filename}/placeOrder`);
+    console.log(error);
     console.error("Error placing order:", error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
@@ -222,6 +252,8 @@ export const verifyPayment = async (req, res) => {
       res.status(400).json({ error: 'Payment verification failed' });
     }
   } catch (error) {
+    console.log(`\nError in ${filename}/verifyPayment`);
+    console.log(error);
     console.error("Error verifying payment:", error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
@@ -235,6 +267,8 @@ export const fetchUserOrders = async (req, res) => {
 
     res.status(200).json({ data: orders });
   } catch (error) {
+    console.log(`\nError in ${filename}/fetchUserOrders`);
+    console.log(error);
     console.error("Error fetching user orders:", error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
