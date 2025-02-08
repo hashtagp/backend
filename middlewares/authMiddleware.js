@@ -32,6 +32,10 @@ export const verifyToken = (req, res, next) => {
   } catch (error) {
     console.log(`\nError in ${filename}/verifyToken`);
     console.log(error);
+    if (error.name === 'TokenExpiredError') {
+      console.error("Token expired:", error);
+      return res.status(401).json({ error: 'Token expired.' });
+    }
     console.error("Error verifying token:", error);
     res.status(400).json({ error: 'Invalid token.' });
   }
