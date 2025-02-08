@@ -8,9 +8,14 @@ import multer from "multer"
 import { get } from 'http';
 
 
+const storage = multer.diskStorage({
+    destination:"uploads",
+    filename: (req,file,cb)=>{
+        return cb(null,`${Date.now()}${file.originalname}`)
+    }
+})
 
-const storage = multer.memoryStorage(); // ✅ Store files in memory instead of disk
-const upload = multer({ storage }); //for vercel
+const upload = multer({storage:storage})
 
 
 

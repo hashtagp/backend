@@ -2,12 +2,11 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
-  "main": "api/server.js",
+  "main": "server.js",
   "type": "module",
   "scripts": {
-  "vercel-start": "node api/server.js",
-  "dev": "nodemon api/server.js",
-  "build": "echo 'No build step required'"
+  "start": "node server.js",
+  "dev": "nodemon server.js"
 },
   "author": "",
   "license": "ISC",
