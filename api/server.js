@@ -66,8 +66,9 @@ app.get('/',(req,res)=>{
 
 // Start the Server
 const PORT = process.env.PORT || 5000;
-module.exports = app; //for vercel
+export default app;
+ //for vercel
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+// app.listen(PORT, () => {
+//   console.log(`Server is running on port ${PORT}`);
+// });
