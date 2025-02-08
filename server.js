@@ -31,7 +31,7 @@ app.use(cookieParser()); // To handle cookies
 // CORS configuration
 //testing for cors origin: ['http://localhost:5173','http://localhost:5174']
 const corsOptions = {
-  origin: ["http://13.60.168.229","https://devgifts-qgy0825w6-pritams-projects-5f5a5034.vercel.app","http://localhost:5173"], // Update with your frontend URL
+  origin: ["http://13.60.168.229","https://devgifts.vercel.app","http://localhost:5173"], // Update with your frontend URL
   credentials: true, // Allow credentials (cookies, authorization headers, etc.)
   optionsSuccessStatus: 200 // Some legacy browsers choke on 204ssh
 };
