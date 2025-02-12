@@ -75,7 +75,7 @@ export const fetchAllOrders = async (req, res) => {
 
     // Fetch orders within the date range
     const orders = await Order.find({
-      orderDate: { $gte: startDate, $lte: endDate },
+      orderDate: { $gte: startDate, $lte: endDate }, status: "Confirmed"
     });
 
     res.status(200).json({ success:true, orders });
