@@ -7,7 +7,7 @@ const OrderSchema = new mongoose.Schema({
   estimatedDate: { 
     type: Date, 
     default: function() {
-      return new Date(Date.now() + 10 * 24 * 60 * 60 * 1000); // 3 days from now
+      return new Date(Date.now() + 10 * 24 * 60 * 60 * 1000); // 10 days from now
     }
   },
   shippedDate: { 
@@ -26,12 +26,25 @@ const OrderSchema = new mongoose.Schema({
       gst: Number,
     },
   ],
+  // Financial breakdown
+  itemTotal: { type: Number, required: true }, // Subtotal before tax/shipping
+  shippingCharges: { type: Number, required: true, default: 0 },
+  salesTax: { type: Number, required: true, default: 0 },
   totalAmount: { type: Number, required: true },
   status: { type: String, required: true, default: 'Pending' }, // New field
   payment: {
     method: { type: String, required: true },
     status: { type: Boolean, required: true, default: false },
   }, // New field
+  coupon: {
+    code: { type: String },
+    discountAmount: { type: Number },
+    discountType: { type: String, enum: ['percentage', 'fixed'] }
+  },
+  customization: {
+    required: { type: Boolean, default: false },
+    details: { type: String }
+  }
 });
 
 const Order = mongoose.model('Order', OrderSchema);

@@ -29,7 +29,12 @@ authRoutes.post('/register', async (req, res) => {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   try {
-  const newUser = new User({ username, email, password: hashedPassword });
+
+    const existingUser = await User.findOne({
+      $or: [{ username }, { email }],
+    });
+    if (existingUser) return res.status(400).json({ success: false, message: 'User already exists' });
+    const newUser = new User({ username, email, password: hashedPassword });
   
     await newUser.save();
 
@@ -44,80 +49,80 @@ authRoutes.post('/register', async (req, res) => {
       secure: process.env.NODE_ENV === 'production', // Use secure in production
     });
 
-    res.status(201).json({ accessToken });
+    res.status(201).json({ success: true, accessToken });
   } catch (error) {
     console.log(`Error in ${filename} POST /register`);
     console.log(error);
-    res.status(400).json({ error });
+    res.status(400).json({ success: false, message: 'Registration failed', error });
   }
 });
 
 // Login User
 authRoutes.post('/login', async (req, res) => {
   try{
-  const { username, password } = req.body;
+    const { username, password } = req.body;
 
-  const user = await User.findOne({ username });
-  if (!user) return res.status(404).json({ error: 'User not found' });
+    const user = await User.findOne({ username });
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
-  const isValid = await bcrypt.compare(password, user.password);
-  if (!isValid) return res.status(401).json({ error: 'Invalid credentials' });
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) return res.status(401).json({ success: false, message: 'Invalid credentials' });
 
-  const accessToken = generateAccessToken(user._id);
-  const refreshToken = generateRefreshToken(user._id);
+    const accessToken = generateAccessToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
 
-  refreshTokens.push(refreshToken);
+    refreshTokens.push(refreshToken);
 
-  // Send the refresh token as an HTTP-only cookie
-  res.cookie('refreshToken', refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', // Use secure in production
-  });
+    // Send the refresh token as an HTTP-only cookie
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // Use secure in production
+    });
 
-  res.status(200).json({ accessToken });
-}
-catch (error) {
-  console.log(`Error in ${filename} POST /login`);
-  console.log(error);
-  res.status(400).json({ error });
-}
+    res.status(200).json({ success: true, accessToken });
+  }
+  catch (error) {
+    console.log(`Error in ${filename} POST /login`);
+    console.log(error);
+    res.status(400).json({ success: false, message: 'Something went wrong', error });
+  }
 });
 
 // Refresh Access Token
 authRoutes.post('/token', (req, res) => {
   try{
-  const refreshToken = req.cookies.refreshToken;
+    const refreshToken = req.cookies.refreshToken;
 
-  if (!refreshToken) return res.status(401).json({ error: 'No refresh token provided' });
-  if (!refreshTokens.includes(refreshToken)) return res.status(403).json({ error: 'Invalid refresh token' });
+    if (!refreshToken) return res.status(401).json({ success: false, message: 'No refresh token provided' });
+    if (!refreshTokens.includes(refreshToken)) return res.status(403).json({ success: false, message: 'Invalid refresh token' });
 
-  jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ error: 'Invalid refresh token' });
+    jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
+      if (err) return res.status(403).json({ success: false, message: 'Invalid refresh token' });
 
-    const accessToken = generateAccessToken(user.id);
-    res.status(200).json({ accessToken });
-  });
-}
-catch (error) {
-  console.log(`Error in ${filename} POST /token`);
-  console.log(error);
-  res.status(400).json({ error });
-}
+      const accessToken = generateAccessToken(user.id);
+      res.status(200).json({ success: true, accessToken });
+    });
+  }
+  catch (error) {
+    console.log(`Error in ${filename} POST /token`);
+    console.log(error);
+    res.status(400).json({ success: false, message: 'Token refresh failed', error });
+  }
 });
 
 // Logout User
 authRoutes.post('/logout', (req, res) => {
   try{
-  const refreshToken = req.cookies.refreshToken;
+    const refreshToken = req.cookies.refreshToken;
 
-  refreshTokens = refreshTokens.filter(token => token !== refreshToken);
-  res.clearCookie('refreshToken');
-  res.status(200).send('Logged out');
+    refreshTokens = refreshTokens.filter(token => token !== refreshToken);
+    res.clearCookie('refreshToken');
+    res.status(200).json({ success: true, message: 'Logged out successfully' });
   }
   catch (error) {
     console.log(`Error in ${filename} POST /logout`);
     console.log(error);
-    res.status(400).json({ error });
+    res.status(400).json({ success: false, message: 'Logout failed', error });
   }
 });
 

@@ -14,6 +14,7 @@ import verifyOrderRoutes from './routes/verifyOrder.js'; // Import verify order 
 import myOrdersRoutes from './routes/myOrders.js'; // Import my orders routes
 import placeOrderRoutes from './routes/placeOrder.js'; // Import place order routes
 import adminRoutes from './routes/admin.js'; // Import admin routes
+import couponRoutes from './routes/coupon.js'; // Import coupon routes
 import cors from 'cors';
 
 dotenv.config();
@@ -39,8 +40,6 @@ app.use(cors(corsOptions));
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
   serverSelectionTimeoutMS: 30000,
   socketTimeoutMS: 45000,
 }).then(() => console.log('MongoDB Connected'))
@@ -59,6 +58,7 @@ app.use('/api/order', verifyOrderRoutes); // Use verify order routes
 app.use('/api/order', myOrdersRoutes); // Use my orders routes
 app.use('/api/order', placeOrderRoutes); // Use place order routes
 app.use('/api/admin', adminRoutes); // Use admin routes
+app.use('/api/coupon', couponRoutes); // Use coupon routes
 
 app.get('/',(req,res)=>{
   res.send("API working!!!")

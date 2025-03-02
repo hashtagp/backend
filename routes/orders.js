@@ -1,10 +1,13 @@
 import express from 'express';
-import { verifyToken, fetchAllOrders, fetchOrderById, addItemToCart, createOrder, updateOrderStatus } from '../controllers/orderControllers.js';
+import { verifyToken, fetchAllOrders, fetchOrderById, addItemToCart, createOrder, updateOrderStatus, calculateShippingCharge } from '../controllers/orderControllers.js';
 
 const orderRoutes = express.Router();
 
 // Fetch All Orders
 orderRoutes.get('/', verifyToken, fetchAllOrders);
+
+//calculate shipping charge
+orderRoutes.post('/shippingCharge', verifyToken, calculateShippingCharge);
 
 // Fetch Order by ID
 orderRoutes.get('/track', verifyToken, fetchOrderById);
