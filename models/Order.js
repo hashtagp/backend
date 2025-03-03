@@ -16,6 +16,9 @@ const OrderSchema = new mongoose.Schema({
   deliveredDate: { 
     type: Date,
   },
+  cancelledDate: { 
+    type: Date,
+  },
   items: [
     {
       itemId: String,

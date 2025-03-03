@@ -114,5 +114,59 @@ export const deleteBanner = async (req, res) => {
     }
 }
 
+// Promote a user to admin
+export const promoteAdmin = async (req, res) => {
+  const { email } = req.body;
+  
+  if (!email) {
+    return res.status(400).json({ 
+      success: false, 
+      message: 'Email is required' 
+    });
+  }
 
+  try {
+    // Find user by email
+    const user = await User.findOne({ email });
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+    
+    // Check if user is already an admin
+    if (user.admin) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'User is already an admin' 
+      });
+    }
+    
+    // Update user to admin status
+    user.admin = true;
+    await user.save();
+    
+    console.log(`User ${user.username} (${user.email}) promoted to admin`);
+    
+    return res.status(200).json({ 
+      success: true, 
+      message: 'User successfully promoted to admin',
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email
+      }
+    });
+  } catch (error) {
+    console.log(`\nError in ${filename}/promoteAdmin`);
+    console.log(error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Server error while promoting user',
+      error: error.message
+    });
+  }
+};
 

@@ -16,7 +16,7 @@ const verifyAdminAccess = (req, res, next) => {
 };
 
 // Create a new coupon (admin only)
-couponRoutes.post('/admin', verifyToken, verifyAdminAccess, async (req, res) => {
+couponRoutes.post('/create/admin', verifyToken, verifyAdminAccess, async (req, res) => {
   try {
     const newCoupon = new Coupon(req.body);
     newCoupon.code = newCoupon.code.toUpperCase();
@@ -195,7 +195,7 @@ couponRoutes.get('/admin/:id', verifyToken, verifyAdminAccess, async (req, res) 
 });
 
 // Update a coupon
-couponRoutes.put('/admin/:id', verifyToken, verifyAdminAccess, async (req, res) => {
+couponRoutes.put('/update/admin/:id', verifyToken, verifyAdminAccess, async (req, res) => {
   try {
     if (req.body.code) {
       req.body.code = req.body.code.toUpperCase();
@@ -224,7 +224,7 @@ couponRoutes.put('/admin/:id', verifyToken, verifyAdminAccess, async (req, res) 
 });
 
 // Delete a coupon
-couponRoutes.delete('/admin/:id', verifyToken, verifyAdminAccess, async (req, res) => {
+couponRoutes.delete('/delete/admin/:id', verifyToken, verifyAdminAccess, async (req, res) => {
   try {
     const deletedCoupon = await Coupon.findByIdAndDelete(req.params.id);
     if (!deletedCoupon) {

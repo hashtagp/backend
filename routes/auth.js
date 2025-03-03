@@ -12,11 +12,11 @@ const filename = 'auth.js';
 
 // Generate Tokens
 export const generateAccessToken = (userId, isAdmin=false) => {
-  return jwt.sign({ id: userId, isAdmin }, process.env.JWT_SECRET, { expiresIn: '7d' });
+  return jwt.sign({ id: userId, isAdmin }, process.env.JWT_SECRET, { expiresIn: '87600h' });
 };
 
 export const generateRefreshToken = (userId, isAdmin=false) => {
-  return jwt.sign({ id: userId, isAdmin }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '720h' });
+  return jwt.sign({ id: userId, isAdmin }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '87600h' });
 };
 
 // In-memory storage for refresh tokens (use a database in production)

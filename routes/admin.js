@@ -1,5 +1,5 @@
 import express from 'express';
-import { adminLogin, adminRegister, addBanner, deleteBanner } from '../controllers/adminControllers.js';
+import { adminLogin, adminRegister, addBanner, deleteBanner, promoteAdmin } from '../controllers/adminControllers.js';
 import { updateOrderStatus, fetchAllOrders } from '../controllers/orderControllers.js';
 import { fetchAllProducts, addProduct, updateProduct, deleteProduct } from '../controllers/productControllers.js';
 import { getBanner } from '../controllers/userControllers.js';
@@ -34,5 +34,6 @@ adminRoutes.put('/update', verifyToken, updateProduct);
 adminRoutes.post('/delete', verifyToken, deleteProduct);
 adminRoutes.delete('/delete/banner/:id', verifyToken, deleteBanner);
 adminRoutes.get('/verify', verifyToken);
+adminRoutes.post('/promote', verifyToken, promoteAdmin);
 
 export default adminRoutes;
