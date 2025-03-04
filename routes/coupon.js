@@ -1,5 +1,6 @@
 import express from 'express';
 import Coupon from '../models/coupon.js';
+import userCouponUsage from '../models/userCouponUsage.js';
 import { verifyToken } from '../middlewares/authMiddleware.js'; // Updated path
 
 const couponRoutes = express.Router();
@@ -49,6 +50,7 @@ couponRoutes.get('/admin/all', verifyToken, verifyAdminAccess, async (req, res) 
 couponRoutes.post('/validate', verifyToken, async (req, res) => {
   try {
     const { code, orderAmount } = req.body;
+    const userId = req.user.id; // Get the current user's ID
     
     if (!code) {
       return res.status(400).json({ 
@@ -78,6 +80,23 @@ couponRoutes.post('/validate', verifyToken, async (req, res) => {
         success: false,
         message: 'Coupon is expired or inactive' 
       });
+    }
+    
+    // Check user-specific usage limit if set
+    if (coupon.userUsageLimit !== null) {
+      // Find usage record for this user and coupon
+      const userUsage = await userCouponUsage.findOne({ 
+        userId: userId,
+        couponId: coupon._id
+      });
+      
+      // If user has used this coupon before and reached limit
+      if (userUsage && userUsage.usageCount >= coupon.userUsageLimit) {
+        return res.status(400).json({ 
+          success: false,
+          message: `You've reached the maximum usage limit for this coupon`
+        });
+      }
     }
     
     if (orderAmount < coupon.minPurchase) {
@@ -129,6 +148,9 @@ couponRoutes.post('/validate', verifyToken, async (req, res) => {
 couponRoutes.post('/apply', verifyToken, async (req, res) => {
   try {
     const { code, orderId } = req.body;
+    const userId = req.user.id; // Get the current user's ID
+
+    console.log(`[COUPON APPLY] Starting apply for user ${userId}, code ${code}, order ${orderId}`);
     
     if (!code || !orderId) {
       return res.status(400).json({ 
@@ -153,28 +175,80 @@ couponRoutes.post('/apply', verifyToken, async (req, res) => {
       });
     }
     
-    // Increment usage count
+    // Check user-specific usage limit if set
+    if (coupon.userUsageLimit !== null) {
+      // Find usage record for this user and coupon
+      const userUsage = await userCouponUsage.findOne({ 
+        userId: userId,
+        couponId: coupon._id
+      });
+      
+      // If user has used this coupon before and reached limit
+      if (userUsage && userUsage.usageCount >= coupon.userUsageLimit) {
+        return res.status(400).json({ 
+          success: false,
+          message: `You've reached the maximum usage limit for this coupon`
+        });
+      }
+    }
+    
+    // Increment global usage count
     coupon.usageCount += 1;
     
-    // Check if usage limit is reached after this use
+    // Check if global usage limit is reached
     if (coupon.usageLimit !== null && coupon.usageCount >= coupon.usageLimit) {
       coupon.isActive = false; // Deactivate if limit reached
     }
     
     await coupon.save();
     
+    // Update or create user-specific usage record
+    let userUsage = await userCouponUsage.findOne({
+      userId: userId,
+      couponId: coupon._id
+    });
+    console.log(`[COUPON APPLY] Existing usage found: ${Boolean(userUsage)}`);
+    if (userUsage) {
+      console.log(`[COUPON APPLY] Current usage count: ${userUsage.usageCount}`);
+    }
+
+    if (userUsage) {
+      // Increment existing usage count
+      userUsage.usageCount += 1;
+      await userUsage.save();
+      console.log(`[COUPON APPLY] Updated usage count: ${userUsage.usageCount}`);
+    } else {
+      // Create new usage record with count=1
+      console.log(`[COUPON APPLY] Creating new usage record for user ${userId} and coupon ${coupon._id}`);
+      
+      try {
+        userUsage = await userCouponUsage.create({
+          userId: userId,
+          couponId: coupon._id,
+          usageCount: 1
+        });
+        console.log(`[COUPON APPLY] New usage record created with ID: ${userUsage._id}`);
+      } catch (createError) {
+        console.error(`[COUPON APPLY] Error creating usage record:`, createError);
+        throw createError; // Re-throw to be caught by the outer catch
+      }
+    }
+    
+    // Log after userUsage is properly defined
+    console.log(`User ${userId} has used coupon ${coupon.code} ${userUsage.usageCount} time(s)`);
+    
     res.status(200).json({
       success: true,
       message: 'Coupon applied successfully'
     });
   } catch (error) {
+    console.error("Error applying coupon:", error);
     res.status(500).json({ 
       success: false,
       message: error.message 
     });
   }
 });
-
 // Get a specific coupon
 couponRoutes.get('/admin/:id', verifyToken, verifyAdminAccess, async (req, res) => {
   try {

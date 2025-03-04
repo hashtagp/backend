@@ -1,11 +1,13 @@
 import Order from '../models/Order.js';
 import User from '../models/User.js';
 import Coupon from '../models/coupon.js';
+import userCouponUsage from '../models/userCouponUsage.js';
 import jwt from 'jsonwebtoken';
 import Razorpay from 'razorpay';
 import dotenv from 'dotenv';
 import dayjs from 'dayjs';
-import axios from 'axios'; // Make sure axios is imported
+import axios from 'axios'; 
+import transporter from '../config/emailConfig.js';
 
 dotenv.config();
 const filename = 'orderControllers.js';
@@ -297,9 +299,153 @@ export const verifyPayment = async (req, res) => {
         await user.save();
       }
 
-      // Log coupon usage if applicable
+      // Track coupon usage if applicable
       if (order.coupon && order.coupon.code) {
         console.log(`Coupon ${order.coupon.code} was used in order ${orderId}`);
+        
+        try {
+          // Get the coupon from database to get its ID and update usage count
+          const coupon = await Coupon.findOne({ code: order.coupon.code });
+          
+          if (coupon) {
+            console.log(`Found coupon ${coupon.code} with ID ${coupon._id}`);
+            
+            // Increment global usage count if not already done
+            if (!order.couponUsageTracked) {
+              coupon.usageCount += 1;
+              
+              // Check if global usage limit is reached
+              if (coupon.usageLimit !== null && coupon.usageCount >= coupon.usageLimit) {
+                coupon.isActive = false; // Deactivate if limit reached
+                console.log(`Coupon ${coupon.code} reached usage limit and was deactivated`);
+              }
+              
+              await coupon.save();
+              
+              // Mark that we've tracked this coupon usage
+              order.couponUsageTracked = true;
+              await order.save();
+            }
+            
+            // Update or create user-specific usage record
+            let userUsage = await userCouponUsage.findOne({
+              userId: order.userId,
+              couponId: coupon._id
+            });
+            
+            if (userUsage) {
+              // Increment existing usage count
+              userUsage.usageCount += 1;
+              await userUsage.save();
+              console.log(`Updated usage count for user ${order.userId} to ${userUsage.usageCount}`);
+            } else {
+              // Create new usage record with count=1
+              userUsage = await userCouponUsage.create({
+                userId: order.userId,
+                couponId: coupon._id,
+                usageCount: 1
+              });
+              console.log(`Created new usage record for user ${order.userId} and coupon ${coupon._id}`);
+            }
+          }
+        } catch (couponError) {
+          // Log but don't fail the order verification
+          console.error("Error tracking coupon usage:", couponError);
+        }
+      }
+
+      // ========== Send order confirmation email to customer ==========
+      if (user && user.email) {
+        try {
+          console.log(`Sending order confirmation email to ${user.email}`);
+          
+          // Format the order items for email display
+          const formattedItems = order.items.map(item => {
+            return `${item.name} x ${item.quantity} - ₹${(item.price - item.discount) * item.quantity}`;
+          }).join('\n');
+          
+          // Determine if there's customization and add appropriate message
+          const hasCustomization = order.customization && order.customization.required;
+          const customizationMessage = hasCustomization ? 
+            `<p style="margin: 15px 0; color: #FF6600; font-weight: bold;">You've requested customization for your order. Our team will contact you within 24 hours to discuss your requirements.</p>` : '';
+          
+          // Determine shipping address
+          const shippingAddress = `${order.address.street}, ${order.address.city}, ${order.address.state} ${order.address.postalCode}`;
+          
+          // Create email content
+          const mailOptions = {
+            from: `"Dev Creations" <${process.env.EMAIL_USER}>`,
+            to: user.email,
+            subject: `Order Confirmation - #${order._id.toString().slice(-6)}`,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                  <h2 style="color: #333;">Thank You for Your Order!</h2>
+                  <p style="color: #666;">Your order has been confirmed and is being processed.</p>
+                </div>
+                
+                <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                  <h3 style="color: #333; margin-top: 0;">Order Summary</h3>
+                  <p><strong>Order ID:</strong> #${order._id.toString().slice(-6)}</p>
+                  <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+                  <p><strong>Payment Method:</strong> ${order.payment.method === 'razorpay' ? 'Online Payment' : 'Cash on Delivery'}</p>
+                  <p><strong>Shipping Address:</strong> ${shippingAddress}</p>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                  <h3 style="color: #333;">Items</h3>
+                  <div style="white-space: pre-line; padding: 10px; background-color: #f9f9f9; border-radius: 5px;">
+                    ${formattedItems}
+                  </div>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                  <h3 style="color: #333;">Order Total</h3>
+                  <table style="width: 100%;">
+                    <tr>
+                      <td>Items Subtotal:</td>
+                      <td style="text-align: right;">₹${order.itemTotal}</td>
+                    </tr>
+                    <tr>
+                      <td>Shipping Charge:</td>
+                      <td style="text-align: right;">₹${order.shippingCharge}</td>
+                    </tr>
+                    <tr>
+                      <td>Tax:</td>
+                      <td style="text-align: right;">₹${order.salesTax}</td>
+                    </tr>
+                    ${order.coupon ? `
+                    <tr>
+                      <td>Discount:</td>
+                      <td style="text-align: right;">-₹${order.coupon.discountAmount}</td>
+                    </tr>` : ''}
+                    <tr style="font-weight: bold;">
+                      <td>Total:</td>
+                      <td style="text-align: right;">₹${order.totalAmount}</td>
+                    </tr>
+                  </table>
+                </div>
+                
+                ${customizationMessage}
+                
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center;">
+                  <p style="color: #666; font-size: 14px;">
+                    If you have any questions about your order, please contact our customer service at <a href="mailto:support@devcreations.com">support@devcreations.com</a>
+                  </p>
+                  <p style="color: #999; font-size: 12px;">© 2025 Dev Creations. All rights reserved.</p>
+                </div>
+              </div>
+            `
+          };
+          
+          // Send the email
+          const info = await transporter.sendMail(mailOptions);
+          console.log(`Order confirmation email sent: ${info.messageId}`);
+          
+        } catch (emailError) {
+          // Log but don't fail the order verification if email sending fails
+          console.error("Error sending order confirmation email:", emailError);
+        }
       }
 
       return res.status(200).json({ 

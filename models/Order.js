@@ -31,7 +31,7 @@ const OrderSchema = new mongoose.Schema({
   ],
   // Financial breakdown
   itemTotal: { type: Number, required: true }, // Subtotal before tax/shipping
-  shippingCharges: { type: Number, required: true, default: 0 },
+  shippingCharge: { type: Number, required: true, default: 0 },
   salesTax: { type: Number, required: true, default: 0 },
   totalAmount: { type: Number, required: true },
   status: { type: String, required: true, default: 'Pending' }, // New field
@@ -43,6 +43,10 @@ const OrderSchema = new mongoose.Schema({
     code: { type: String },
     discountAmount: { type: Number },
     discountType: { type: String, enum: ['percentage', 'fixed'] }
+  },
+  couponUsageTracked: {
+    type: Boolean,
+    default: false
   },
   customization: {
     required: { type: Boolean, default: false },
