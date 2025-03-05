@@ -7,7 +7,7 @@ import Razorpay from 'razorpay';
 import dotenv from 'dotenv';
 import dayjs from 'dayjs';
 import axios from 'axios'; 
-import transporter from '../config/emailConfig.js';
+import { transporter_order } from '../config/emailConfig.js';
 
 dotenv.config();
 const filename = 'orderControllers.js';
@@ -79,7 +79,7 @@ export const fetchAllOrders = async (req, res) => {
 
     // Fetch orders within the date range
     const orders = await Order.find({
-      orderDate: { $gte: startDate, $lte: endDate }, status: "Confirmed"
+      orderDate: { $gte: startDate, $lte: endDate },
     });
 
     res.status(200).json({ success:true, orders });
@@ -123,6 +123,8 @@ export const addItemToCart = async (req, res) => {
     user.cart.push({ itemId, quantity });
   }
 
+  console.log("User cart after adding item:", user.cart);
+
   await user.save();
   res.status(200).json(user.cart);
 }
@@ -163,23 +165,154 @@ catch (error) {
 // Update Order Status
 export const updateOrderStatus = async (req, res) => {
   try {
-  const { orderId, status, date } = req.body;
+    const { orderId, status, date } = req.body;
 
-  
     const order = await Order.findById(orderId);
-    console.log("updating order: ",order);
-    console.log("Request by: ",req.user);
+    console.log("updating order: ", order);
+    console.log("Request by: ", req.user);
+    
     if (!order) {
-      return res.status(404).json({ success:false, error: 'Order not found' });
+      return res.status(404).json({ success: false, error: 'Order not found' });
     }
+    
+    // Store previous status to check if it's actually changed
+    const previousStatus = order.status;
+    
     console.log("order updating");
     order[`${status}Date`] = date;
+    // Also update the order status field
+    order.status = status.charAt(0).toUpperCase() + status.slice(1); // Capitalize first letter
+    
     await order.save();
-    res.status(200).json({ success:true, order });
+    
+    // Get user information to send email
+    const user = await User.findById(order.userId);
+    
+    if (user && user.email) {
+      try {
+        console.log(`Sending order status update email to ${user.email}`);
+        
+        // Format the order items for email display
+        const formattedItems = order.items.map(item => {
+          return `${item.name} x ${item.quantity} - ₹${(item.price - item.discount) * item.quantity}`;
+        }).join('\n');
+        
+        // Create status-specific message
+        let statusMessage = '';
+        let statusColor = '#FF6600';
+        let additionalInfo = '';
+        
+        switch (status) {
+          case 'shipped':
+            statusMessage = 'Your order has been shipped!';
+            statusColor = '#4CAF50'; // Green
+            additionalInfo = 'Your package is on its way to you. You will receive it within 5-7 business days.';
+            break;
+          case 'delivered':
+            statusMessage = 'Your order has been delivered!';
+            statusColor = '#2196F3'; // Blue
+            additionalInfo = 'Thank you for shopping with Dev Creations. We hope you love your purchase!';
+            break;
+          case 'cancelled':
+            statusMessage = 'Your order has been cancelled';
+            statusColor = '#F44336'; // Red
+            additionalInfo = 'If you did not request this cancellation or have any questions, please contact our customer service.';
+            break;
+          default:
+            statusMessage = `Your order status has been updated to ${status}`;
+            additionalInfo = 'If you have any questions, please contact our customer service.';
+        }
+        
+        // Determine shipping address
+        const shippingAddress = `${order.address.street}, ${order.address.city}, ${order.address.state} ${order.address.postalCode}`;
+        
+        // Create email content
+        const mailOptions = {
+          from: `"Dev Creations Gifts" <${process.env.EMAIL_USER_ORDER}>`,
+          to: user.email,
+          subject: `Order #${order._id.toString().slice(-6)} ${status.charAt(0).toUpperCase() + status.slice(1)}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd;">
+              <div style="text-align: center; margin-bottom: 20px;">
+                <h2 style="color: ${statusColor};">${statusMessage}</h2>
+                <p style="color: #666;">${additionalInfo}</p>
+              </div>
+              
+              <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                <h3 style="color: #333; margin-top: 0;">Order Summary</h3>
+                <p><strong>Order ID:</strong> #${order._id.toString()}</p>
+                <p><strong>Order Date:</strong> ${new Date(order.orderDate).toLocaleDateString()}</p>
+                <p><strong>Status Updated:</strong> ${new Date(date).toLocaleDateString()}</p>
+                <p><strong>Payment Method:</strong> ${order.payment.method === 'razorpay' ? 'Online Payment' : 'Cash on Delivery'}</p>
+                <p><strong>Shipping Address:</strong> ${shippingAddress}</p>
+              </div>
+              
+              <div style="margin-bottom: 20px;">
+                <h3 style="color: #333;">Items</h3>
+                <div style="white-space: pre-line; padding: 10px; background-color: #f9f9f9; border-radius: 5px;">
+                  ${formattedItems}
+                </div>
+              </div>
+              
+              <div style="margin-bottom: 20px;">
+                <h3 style="color: #333;">Order Total</h3>
+                <table style="width: 100%;">
+                  <tr>
+                    <td>Items Subtotal:</td>
+                    <td style="text-align: right;">₹${order.itemTotal}</td>
+                  </tr>
+                  <tr>
+                    <td>Shipping Charge:</td>
+                    <td style="text-align: right;">₹${order.shippingCharge}</td>
+                  </tr>
+                  <tr>
+                    <td>Tax:</td>
+                    <td style="text-align: right;">₹${order.salesTax}</td>
+                  </tr>
+                  ${order.couponUsageTracked ? `
+                  <tr>
+                    <td>Discount:</td>
+                    <td style="text-align: right;">-₹${order.coupon.discountAmount}</td>
+                  </tr>` : ''}
+                  <tr style="font-weight: bold;">
+                    <td>Total:</td>
+                    <td style="text-align: right;">₹${order.totalAmount}</td>
+                  </tr>
+                </table>
+              </div>
+              
+              ${status === 'delivered' ? `
+              <div style="margin: 20px 0; padding: 15px; background-color: #f9f9f9; border-radius: 5px; text-align: center;">
+                <p>Enjoying your purchase? We'd love to hear from you!</p>
+                <a href="${process.env.FRONTEND_URL}/review/${order._id}" style="background-color: #FF6600; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 10px;">Leave a Review</a>
+              </div>
+              ` : ''}
+              
+              <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center;">
+                <p style="color: #666; font-size: 14px;">
+                  If you have any questions about your order, please contact our customer service at <a href="mailto:info@devcreations.com">info@devcreations.com</a>
+                </p>
+                <p style="color: #999; font-size: 12px;">© 2025 Dev Creations. All rights reserved.</p>
+              </div>
+            </div>
+          `
+        };
+        
+        // Send the email
+        const info = await transporter_order.sendMail(mailOptions);
+        console.log(`Order status update email sent: ${info.messageId}`);
+        
+      } catch (emailError) {
+        // Log but don't fail the order update if email sending fails
+        console.error("Error sending order status update email:", emailError);
+      }
+    }
+    
+    res.status(200).json({ success: true, order });
   } catch (error) {
     console.log(`\nError in ${filename}/updateOrderStatus`);
     console.log(error);
-    res.status(400).json({ success:false, error });
+    res.status(400).json({ success: false, error });
   }
 };
 
@@ -361,6 +494,7 @@ export const verifyPayment = async (req, res) => {
           
           // Format the order items for email display
           const formattedItems = order.items.map(item => {
+            console.log("item in order: ", item);
             return `${item.name} x ${item.quantity} - ₹${(item.price - item.discount) * item.quantity}`;
           }).join('\n');
           
@@ -374,7 +508,7 @@ export const verifyPayment = async (req, res) => {
           
           // Create email content
           const mailOptions = {
-            from: `"Dev Creations" <${process.env.EMAIL_USER}>`,
+            from: `"Dev Creations Gifts" <${process.env.EMAIL_USER_ORDER}>`,
             to: user.email,
             subject: `Order Confirmation - #${order._id.toString().slice(-6)}`,
             html: `
@@ -386,7 +520,7 @@ export const verifyPayment = async (req, res) => {
                 
                 <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
                   <h3 style="color: #333; margin-top: 0;">Order Summary</h3>
-                  <p><strong>Order ID:</strong> #${order._id.toString().slice(-6)}</p>
+                  <p><strong>Order ID:</strong> #${order._id.toString()}</p>
                   <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
                   <p><strong>Payment Method:</strong> ${order.payment.method === 'razorpay' ? 'Online Payment' : 'Cash on Delivery'}</p>
                   <p><strong>Shipping Address:</strong> ${shippingAddress}</p>
@@ -414,7 +548,7 @@ export const verifyPayment = async (req, res) => {
                       <td>Tax:</td>
                       <td style="text-align: right;">₹${order.salesTax}</td>
                     </tr>
-                    ${order.coupon ? `
+                    ${order.couponUsageTracked ? `
                     <tr>
                       <td>Discount:</td>
                       <td style="text-align: right;">-₹${order.coupon.discountAmount}</td>
@@ -430,7 +564,7 @@ export const verifyPayment = async (req, res) => {
                 
                 <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center;">
                   <p style="color: #666; font-size: 14px;">
-                    If you have any questions about your order, please contact our customer service at <a href="mailto:support@devcreations.com">support@devcreations.com</a>
+                    If you have any questions about your order, please contact our customer service at <a href="mailto:info@devcreations.com">info@devcreations.com</a>
                   </p>
                   <p style="color: #999; font-size: 12px;">© 2025 Dev Creations. All rights reserved.</p>
                 </div>
@@ -439,7 +573,7 @@ export const verifyPayment = async (req, res) => {
           };
           
           // Send the email
-          const info = await transporter.sendMail(mailOptions);
+          const info = await transporter_order.sendMail(mailOptions);
           console.log(`Order confirmation email sent: ${info.messageId}`);
           
         } catch (emailError) {

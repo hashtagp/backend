@@ -1,6 +1,6 @@
 import User from '../models/User.js';
 import Banner from '../models/Banner.js';
-import transporter from "../config/emailConfig.js";
+import { transporter_info } from "../config/emailConfig.js";
 
 const filename = 'userControllers.js';
 
@@ -43,7 +43,7 @@ export const submitInquiry = async(req,res)=>{
     // Email to admin notification
     const adminMailOptions = {
       from: process.env.EMAIL_USER,
-      to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
+      to: process.env.ADMIN_EMAIL,
       subject: 'New Inquiry Received',
       html: `
         <h2>New Inquiry Received</h2>
@@ -74,8 +74,8 @@ export const submitInquiry = async(req,res)=>{
     // Send both emails
     console.log(`${filename}/submitInquiry: Attempting to send emails...`);
     await Promise.all([
-      transporter.sendMail(adminMailOptions),
-      transporter.sendMail(userMailOptions)
+      transporter_info.sendMail(adminMailOptions),
+      transporter_info.sendMail(userMailOptions)
     ]);
     console.log(`${filename}/submitInquiry: Emails sent successfully`);
     

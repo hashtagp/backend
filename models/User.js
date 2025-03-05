@@ -11,6 +11,7 @@ const UserSchema = new mongoose.Schema({
       quantity: { type: Number, required: true, default: 1 },
       price: { type: Number, required: true }, // Include price
       gst: { type: Number, required: true },
+      discount: { type: Number, default: 0 }
     }
   ],
 });

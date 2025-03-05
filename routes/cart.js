@@ -25,11 +25,12 @@ cartRoutes.post('/add', verifyToken, async (req, res) => {
     }
   
     const itemIndex = user.cart.findIndex(item => item.itemId.toString() === itemId);
+    console.log("product:", product);
   
     if (itemIndex > -1) {
       user.cart[itemIndex].quantity += quantity;
     } else {
-      user.cart.push({ itemId, quantity, price: product.price, gst: product.gst }); // Include price and gst
+      user.cart.push({ itemId, quantity, price: product.price, gst: product.gst, discount: product.discount }); // Include price and gst
     }
   
     await user.save();

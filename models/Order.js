@@ -27,6 +27,7 @@ const OrderSchema = new mongoose.Schema({
       price: Number,
       quantity: Number,
       gst: Number,
+      discount: Number,
     },
   ],
   // Financial breakdown
